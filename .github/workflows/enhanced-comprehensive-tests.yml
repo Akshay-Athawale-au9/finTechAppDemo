@@ -70,7 +70,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3-dev libasound2 default-jre
+        sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3-dev libasound2t64 default-jre
         
     - name: Download WireMock
       run: |
