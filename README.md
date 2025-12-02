@@ -423,4 +423,4 @@ The modular architecture makes it easy to add new services:
 1. Create a new directory in `services/`
 2. Implement the service following the existing patterns
 3. Add the service to `infra/docker-compose.yml`
-4. Update documentation and OpenAPI spec
+4. Update documentation and OpenAPI spec# GitHub Actions Fixes: Tue, Dec  2, 2025  9:29:33 PM
