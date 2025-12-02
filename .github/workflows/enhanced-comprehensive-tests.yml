@@ -1,0 +1,153 @@
+name: Enhanced Comprehensive Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  comprehensive-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.10]
+        node-version: [18.x]
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fintech_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:6-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      redpanda:
+        image: docker.redpanda.com/redpandadata/redpanda:v23.2.15
+        options: >-
+          --health-cmd "rpk cluster health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 9092:9092
+          - 9644:9644
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3-dev libasound2
+        
+    - name: Install Node.js dependencies for all services
+      run: |
+        cd services/auth && npm ci
+        cd ../accounts && npm ci
+        cd ../transfer && npm ci
+        cd ../ledger && npm ci
+        cd ../consumer && npm ci
+        cd ../..
+    
+    - name: Install Python test dependencies
+      run: |
+        # Core testing dependencies
+        pip install -r services/tests/python/requirements.txt
+        
+        # UI testing dependencies
+        pip install -r services/tests/ui/requirements.txt
+        
+        # Security testing dependencies
+        pip install -r services/tests/security/requirements.txt
+        
+        # E2E testing dependencies
+        pip install -r services/tests/e2e/requirements.txt
+        
+        # Performance testing dependencies
+        pip install -r services/tests/performance/requirements.txt
+        
+        # Install Playwright browsers
+        playwright install --with-deps chromium
+    
+    - name: Create database and run migrations
+      run: |
+        # Run database migrations
+        cd migrations
+        PGPASSWORD=postgres psql -h localhost -U postgres -d fintech_test -f 01_create_users_table.sql
+        PGPASSWORD=postgres psql -h localhost -U postgres -d fintech_test -f 02_create_accounts_table.sql
+        PGPASSWORD=postgres psql -h localhost -U postgres -d fintech_test -f 03_create_transfers_table.sql
+        PGPASSWORD=postgres psql -h localhost -U postgres -d fintech_test -f 04_create_ledger_entries_table.sql
+        cd ..
+    
+    - name: Seed database with test data
+      run: |
+        # Run seed scripts
+        cd seed
+        PGPASSWORD=postgres psql -h localhost -U postgres -d fintech_test -f 01_seed_users.sql
+        cd ..
+    
+    - name: Start WireMock for external service simulation
+      run: |
+        cd wiremock
+        java -jar wiremock-standalone-2.35.0.jar --port 8080 &
+        cd ..
+        sleep 10 # Wait for WireMock to start
+    
+    - name: Run comprehensive test suite
+      run: |
+        cd services/tests
+        python run_comprehensive_tests.py
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fintech_test
+        REDIS_URL: redis://localhost:6379
+        KAFKA_BROKER: localhost:9092
+        WIREMOCK_URL: http://localhost:8080
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: |
+          services/tests/**/*.xml
+          services/tests/**/*.json
+          services/tests/**/*.html
+        if-no-files-found: ignore
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        # Kill any remaining processes
+        pkill -f wiremock || true

@@ -1,0 +1,6 @@
+# Security Testing Dependencies
+pytest>=8.4.2
+requests>=2.28.2
+bandit>=1.7.0
+safety>=2.0.0
+PyJWT>=2.8.0

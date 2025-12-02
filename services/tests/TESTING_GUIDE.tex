@@ -1,0 +1,401 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{titling}
+
+\title{Fintech Microservices Testing Guide}
+\author{Development Team}
+\date{\today}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Understanding Mocking}
+
+\subsection{What is Mocking?}
+Mocking is a technique in software testing where you replace real objects or services with simulated ones that mimic the behavior of the real components.
+
+Think of it like using a stunt double in a movie - the stunt double looks and acts like the real actor but is safer and more controllable for specific scenes.
+
+\subsection{Why Do We Use Mocking?}
+
+\subsubsection{1. Isolation}
+\begin{itemize}
+    \item Test one piece of code without depending on other components
+    \item If your database is down, your tests shouldn't fail
+\end{itemize}
+
+\subsubsection{2. Speed}
+\begin{itemize}
+    \item Real database calls can take seconds
+    \item Mock calls return instantly (milliseconds)
+\end{itemize}
+
+\subsubsection{3. Control}
+\begin{itemize}
+    \item You can simulate specific scenarios like:
+    \begin{itemize}
+        \item Database errors
+        \item Network timeouts
+        \item Invalid responses
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{4. Consistency}
+\begin{itemize}
+    \item Mocks return the same data every time
+    \item No "flaky" tests due to external service issues
+\end{itemize}
+
+\subsection{Simple Example}
+
+Let's say you have a function that gets a user's balance from a database:
+
+\begin{lstlisting}[language=Python]
+# Without mocking - depends on real database
+def get_user_balance(user_id):
+    # This connects to a real database
+    balance = database.query(f"SELECT balance FROM accounts WHERE user_id = {user_id}")
+    return balance
+
+# With mocking - uses fake database
+def get_user_balance(user_id):
+    # This uses a mock that always returns 1000
+    balance = mock_database.query(f"SELECT balance FROM accounts WHERE user_id = {user_id}")
+    return balance
+
+# In your test
+def test_get_user_balance():
+    # Setup: Tell the mock what to return
+    mock_database.query.return_value = 1000
+    
+    # Execute
+    result = get_user_balance(123)
+    
+    # Verify
+    assert result == 1000
+\end{lstlisting}
+
+\section{Testing Strategy}
+
+\subsection{Unit Tests vs Integration Tests}
+
+\subsubsection{Use Unit Tests (with Mocks) When:}
+\begin{itemize}
+    \item Testing business logic
+    \item Testing error handling
+    \item Developing locally without internet
+    \item You need tests to run in milliseconds
+    \item You want to test specific code paths
+\end{itemize}
+
+Files: \texttt{test\_*\_service.py}
+
+\subsubsection{Use Integration Tests (with Real Services) When:}
+\begin{itemize}
+    \item Testing the complete flow works
+    \item Verifying database queries are correct
+    \item Checking API contracts
+    \item Testing in CI/CD environments with proper setup
+\end{itemize}
+
+Files: \texttt{test\_*\_service\_integration.py}
+
+\section{Manual Testing Instructions}
+
+\subsection{Prerequisites}
+\begin{enumerate}
+    \item Install Python dependencies:
+    \begin{lstlisting}
+pip install -r python/requirements.txt
+    \end{lstlisting}
+    
+    \item For integration tests, start all services:
+    \begin{lstlisting}
+cd ../../infra
+docker-compose up -d
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Running Tests}
+
+\subsubsection{Option 1: Using pytest directly}
+\begin{lstlisting}
+# Run unit tests only (no services needed)
+pytest python/test_*_service.py -v
+
+# Run integration tests only (services must be running)
+pytest python/*integration.py -v
+
+# Run all tests
+pytest python -v
+\end{lstlisting}
+
+\subsubsection{Option 2: Using npm scripts}
+\begin{lstlisting}
+# Run unit tests only
+npm run test:python-unit
+
+# Run integration tests only
+npm run test:python-integration
+
+# Run all tests
+npm run test:python
+\end{lstlisting}
+
+\subsubsection{Option 3: Using Python runner script}
+\begin{lstlisting}
+# Run all tests
+python run_tests.py
+
+# Run unit tests only
+python run_tests.py --unit
+
+# Run integration tests only
+python run_tests.py --integration
+
+# Install dependencies and run all tests
+python run_tests.py --install-deps --all
+\end{lstlisting}
+
+\section{Automated Testing with GitHub Actions}
+
+\subsection{CI/CD Pipeline Flow}
+
+\begin{enumerate}
+    \item \textbf{On Pull Request:}
+    \begin{itemize}
+        \item Run unit tests only (fast feedback)
+        \item Triggered automatically when code is pushed
+    \end{itemize}
+    
+    \item \textbf{On Merge to Main:}
+    \begin{itemize}
+        \item Run both unit and integration tests
+        \item Deploy to staging environment
+    \end{itemize}
+    
+    \item \textbf{Nightly Builds:}
+    \begin{itemize}
+        \item Run full test suite including performance tests
+    \end{itemize}
+\end{enumerate}
+
+\subsection{GitHub Actions Configuration Example}
+
+\begin{lstlisting}[language=yaml]
+name: CI Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        pip install -r services/tests/python/requirements.txt
+    - name: Run unit tests
+      run: |
+        pytest services/tests/python/test_*_service.py -v
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v2
+    - name: Start services
+      run: |
+        cd infra
+        docker-compose up -d
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        pip install -r services/tests/python/requirements.txt
+    - name: Run integration tests
+      run: |
+        pytest services/tests/python/*integration.py -v
+\end{lstlisting}
+
+\section{Test Cases Coverage}
+
+\subsection{Auth Service Tests}
+
+\subsubsection{Unit Tests (\texttt{test\_auth\_service.py})}
+\begin{enumerate}
+    \item \texttt{test\_register\_new\_user\_success} - Test successful user registration
+    \item \texttt{test\_register\_missing\_credentials} - Test registration with missing email or password
+    \item \texttt{test\_register\_duplicate\_user} - Test registration with existing user
+    \item \texttt{test\_login\_success} - Test successful user login
+    \item \texttt{test\_login\_invalid\_credentials} - Test login with invalid credentials
+\end{enumerate}
+
+\subsubsection{Integration Tests (\texttt{test\_auth\_service\_integration.py})}
+\begin{enumerate}
+    \item \texttt{test\_register\_new\_user\_success} - Test successful user registration with actual service
+    \item \texttt{test\_register\_duplicate\_user} - Test registration with existing user
+    \item \texttt{test\_login\_success} - Test successful user login
+    \item \texttt{test\_login\_invalid\_credentials} - Test login with invalid credentials
+\end{enumerate}
+
+\subsection{Accounts Service Tests}
+
+\subsubsection{Unit Tests (\texttt{test\_accounts\_service.py})}
+\begin{enumerate}
+    \item \texttt{test\_get\_accounts\_success} - Test successful retrieval of user accounts
+    \item \texttt{test\_get\_accounts\_unauthorized} - Test getting accounts without authentication
+    \item \texttt{test\_get\_account\_balance\_success} - Test successful retrieval of account balance
+    \item \texttt{test\_get\_account\_balance\_not\_found} - Test getting balance for non-existent account
+    \item \texttt{test\_deposit\_success} - Test successful deposit to account
+    \item \texttt{test\_withdraw\_success} - Test successful withdrawal from account
+    \item \texttt{test\_withdraw\_insufficient\_funds} - Test withdrawal with insufficient funds
+\end{enumerate}
+
+\subsubsection{Integration Tests (\texttt{test\_accounts\_service\_integration.py})}
+\begin{enumerate}
+    \item \texttt{test\_get\_accounts\_success} - Test successful retrieval of user accounts
+    \item \texttt{test\_get\_accounts\_unauthorized} - Test getting accounts without authentication
+    \item \texttt{test\_get\_account\_balance\_success} - Test successful retrieval of account balance
+    \item \texttt{test\_deposit\_funds\_success} - Test successful deposit to account
+\end{enumerate}
+
+\subsection{Transfer Service Tests}
+
+\subsubsection{Unit Tests (\texttt{test\_transfer\_service.py})}
+\begin{enumerate}
+    \item \texttt{test\_initiate\_transfer\_success} - Test successful fund transfer initiation
+    \item \texttt{test\_initiate\_transfer\_insufficient\_funds} - Test transfer with insufficient funds
+    \item \texttt{test\_initiate\_transfer\_missing\_idempotency\_key} - Test transfer without idempotency key
+    \item \texttt{test\_get\_transfer\_status\_success} - Test successful retrieval of transfer status
+    \item \texttt{test\_get\_transfer\_status\_not\_found} - Test getting status for non-existent transfer
+\end{enumerate}
+
+\subsection{Ledger Service Tests}
+
+\subsubsection{Unit Tests (\texttt{test\_ledger\_service.py})}
+\begin{enumerate}
+    \item \texttt{test\_get\_ledger\_entries\_success} - Test successful retrieval of ledger entries
+    \item \texttt{test\_get\_ledger\_entries\_invalid\_account\_id} - Test getting ledger entries with invalid account ID
+    \item \texttt{test\_get\_transactions\_success} - Test successful retrieval of transactions
+    \item \texttt{test\_get\_transactions\_empty\_results} - Test getting transactions with no results
+\end{enumerate}
+
+\subsection{Consumer Service Tests}
+
+\subsubsection{Unit Tests (\texttt{test\_consumer\_service.py})}
+(Note: Would be implemented similarly to other services)
+\begin{enumerate}
+    \item Test processing valid Kafka messages
+    \item Test handling invalid message formats
+    \item Test handling database errors gracefully
+    \item Test service startup scenarios
+\end{enumerate}
+
+\section{Troubleshooting}
+
+\subsection{Common Issues}
+
+\subsubsection{1. Tests failing with connection errors}
+\textbf{Problem}: Integration tests failing because services aren't running
+\textbf{Solution}: 
+\begin{lstlisting}
+cd ../../infra
+docker-compose up -d
+\end{lstlisting}
+
+\subsubsection{2. ImportError: No module named 'pytest'}
+\textbf{Problem}: Python dependencies not installed
+\textbf{Solution}:
+\begin{lstlisting}
+pip install -r python/requirements.txt
+\end{lstlisting}
+
+\subsubsection{3. Tests running slowly}
+\textbf{Problem}: Running integration tests instead of unit tests
+\textbf{Solution}: Run unit tests only:
+\begin{lstlisting}
+pytest python/test_*_service.py -v
+\end{lstlisting}
+
+\subsubsection{4. Tests failing inconsistently}
+\textbf{Problem}: Using real services in unit tests
+\textbf{Solution}: Use mocks for unit tests and real services only for integration tests
+
+\subsection{Debugging Tips}
+
+\begin{enumerate}
+    \item \textbf{Run a single test}:
+    \begin{lstlisting}
+pytest python/test_auth_service.py::TestAuthService::test_register_new_user_success -v
+    \end{lstlisting}
+    
+    \item \textbf{Run with debug output}:
+    \begin{lstlisting}
+pytest python -v -s
+    \end{lstlisting}
+    
+    \item \textbf{Check what tests would run without running them}:
+    \begin{lstlisting}
+pytest python --collect-only
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Performance Considerations}
+
+\begin{enumerate}
+    \item \textbf{Unit tests} should run in < 1 second total
+    \item \textbf{Integration tests} may take 10-30 seconds depending on service startup time
+    \item \textbf{Use parallel execution} for faster results:
+    \begin{lstlisting}
+pytest python -v -n auto
+    \end{lstlisting}
+\end{enumerate}
+
+\end{document}

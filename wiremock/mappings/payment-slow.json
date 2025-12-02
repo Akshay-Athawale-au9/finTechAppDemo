@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/payment/process"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "success": true,
+      "transactionId": "{{randomValue length=10 type='ALPHANUMERIC'}}",
+      "message": "Payment processed successfully (slow response)"
+    },
+    "fixedDelayMilliseconds": 4000
+  }
+}

@@ -1,0 +1,64 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies for all services
+      run: |
+        cd services/auth && npm ci
+        cd ../accounts && npm ci
+        cd ../transfer && npm ci
+        cd ../ledger && npm ci
+        cd ../consumer && npm ci
+    
+    - name: Lint TypeScript for all services
+      run: |
+        cd services/auth && npx tsc --noEmit
+        cd ../accounts && npx tsc --noEmit
+        cd ../transfer && npx tsc --noEmit
+        cd ../ledger && npx tsc --noEmit
+        cd ../consumer && npx tsc --noEmit
+    
+    - name: Build Docker images
+      run: |
+        docker build -t auth-service ./services/auth
+        docker build -t accounts-service ./services/accounts
+        docker build -t transfer-service ./services/transfer
+        docker build -t ledger-service ./services/ledger
+        docker build -t consumer-service ./services/consumer
+    
+    - name: Start services with docker-compose
+      run: |
+        cd infra
+        docker-compose up -d
+        sleep 30 # Wait for services to start
+    
+    - name: Check service health
+      run: |
+        # Check if services are responding
+        curl --retry 5 --retry-delay 5 -f http://localhost:3001/health || exit 1
+        curl --retry 5 --retry-delay 5 -f http://localhost:3002/health || exit 1
+        curl --retry 5 --retry-delay 5 -f http://localhost:3003/health || exit 1
+        curl --retry 5 --retry-delay 5 -f http://localhost:3004/health || exit 1
+    
+    - name: Stop services
+      if: always()
+      run: |
+        cd infra
+        docker-compose down

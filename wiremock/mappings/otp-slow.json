@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/otp/verify"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "success": true,
+      "message": "OTP verified successfully (slow response)"
+    },
+    "fixedDelayMilliseconds": 3000
+  }
+}

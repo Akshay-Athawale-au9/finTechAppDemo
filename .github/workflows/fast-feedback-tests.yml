@@ -1,0 +1,56 @@
+name: Fast Feedback Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  fast-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.10]
+        node-version: [18.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install Node.js dependencies for all services
+      run: |
+        cd services/auth && npm ci
+        cd ../accounts && npm ci
+        cd ../transfer && npm ci
+        cd ../ledger && npm ci
+        cd ../consumer && npm ci
+        cd ../..
+    
+    - name: Install Python test dependencies
+      run: |
+        # Core testing dependencies
+        pip install -r services/tests/python/requirements.txt
+    
+    - name: Run unit tests
+      run: |
+        cd services/tests
+        python -m pytest python/ -v --tb=short
+    
+    - name: Check TypeScript compilation
+      run: |
+        cd services/auth && npx tsc --noEmit
+        cd ../accounts && npx tsc --noEmit
+        cd ../transfer && npx tsc --noEmit
+        cd ../ledger && npx tsc --noEmit
+        cd ../consumer && npx tsc --noEmit

@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/payment/process"
+  },
+  "response": {
+    "status": 402,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "success": false,
+      "message": "Insufficient funds"
+    }
+  }
+}

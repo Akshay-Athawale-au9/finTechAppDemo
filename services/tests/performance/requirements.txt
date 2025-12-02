@@ -1,0 +1,5 @@
+# Performance Testing Dependencies
+pytest>=8.4.2
+requests>=2.28.2
+pytest-mock>=3.10.0
+# Note: k6 is not a Python package and must be installed separately from https://k6.io/docs/get-started/installation/

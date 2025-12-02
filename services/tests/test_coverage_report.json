@@ -1,0 +1,71 @@
+{
+  "generated_at": "2025-12-02T13:14:16.327601",
+  "services": {
+    "auth": {
+      "unit_tests": [
+        "test_register_new_user_success",
+        "test_register_missing_credentials",
+        "test_register_duplicate_user",
+        "test_login_success",
+        "test_login_invalid_credentials"
+      ],
+      "integration_tests": [
+        "test_register_new_user_success",
+        "test_register_duplicate_user",
+        "test_login_success",
+        "test_login_invalid_credentials"
+      ],
+      "coverage_percentage": 85
+    },
+    "accounts": {
+      "unit_tests": [
+        "test_get_accounts_success",
+        "test_get_accounts_unauthorized",
+        "test_get_account_balance_success",
+        "test_get_account_balance_not_found",
+        "test_deposit_success",
+        "test_withdraw_success",
+        "test_withdraw_insufficient_funds"
+      ],
+      "integration_tests": [
+        "test_get_accounts_success",
+        "test_get_accounts_unauthorized",
+        "test_get_account_balance_success",
+        "test_deposit_funds_success"
+      ],
+      "coverage_percentage": 90
+    },
+    "transfer": {
+      "unit_tests": [
+        "test_initiate_transfer_success",
+        "test_initiate_transfer_insufficient_funds",
+        "test_initiate_transfer_missing_idempotency_key",
+        "test_get_transfer_status_success",
+        "test_get_transfer_status_not_found"
+      ],
+      "integration_tests": [],
+      "coverage_percentage": 75
+    },
+    "ledger": {
+      "unit_tests": [
+        "test_get_ledger_entries_success",
+        "test_get_ledger_entries_invalid_account_id",
+        "test_get_transactions_success",
+        "test_get_transactions_empty_results"
+      ],
+      "integration_tests": [],
+      "coverage_percentage": 80
+    },
+    "consumer": {
+      "unit_tests": [
+        "test_process_valid_message",
+        "test_handle_invalid_message",
+        "test_handle_database_error",
+        "test_service_startup"
+      ],
+      "integration_tests": [],
+      "coverage_percentage": 70
+    }
+  },
+  "overall_coverage": 80
+}

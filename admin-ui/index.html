@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fintech Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .response {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .response.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .response.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #e9ecef;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fintech Admin Dashboard</h1>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('mock')">Mock Scenarios</div>
+            <div class="tab" onclick="switchTab('audit')">Audit Logs</div>
+            <div class="tab" onclick="switchTab('health')">Health Status</div>
+        </div>
+        
+        <div id="mock" class="tab-content active">
+            <div class="card">
+                <h2>Service Virtualization Control</h2>
+                <p>Toggle between different mock scenarios for external services</p>
+                
+                <div class="form-group">
+                    <label for="scenario">Select Scenario:</label>
+                    <select id="scenario">
+                        <option value="success">Fast/Success</option>
+                        <option value="slow">Slow Response</option>
+                        <option value="error">Error Response</option>
+                    </select>
+                </div>
+                
+                <button onclick="toggleScenario()">Apply Scenario</button>
+                
+                <div id="mock-response" class="response"></div>
+            </div>
+        </div>
+        
+        <div id="audit" class="tab-content">
+            <div class="card">
+                <h2>Audit Logs</h2>
+                <p>Recent system activities and events</p>
+                
+                <div class="form-group">
+                    <label for="log-limit">Number of logs to show:</label>
+                    <input type="number" id="log-limit" value="10" min="1" max="100">
+                    <button onclick="loadAuditLogs()" style="margin-top: 10px;">Load Logs</button>
+                </div>
+                
+                <div id="audit-logs-container">
+                    <table id="audit-logs-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Service</th>
+                                <th>Action</th>
+                                <th>Resource</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Logs will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="audit-response" class="response"></div>
+            </div>
+        </div>
+        
+        <div id="health" class="tab-content">
+            <div class="card">
+                <h2>System Health Status</h2>
+                <p>Current status of all services</p>
+                
+                <button onclick="checkHealth()">Refresh Health Status</button>
+                
+                <div id="health-status-container">
+                    <table id="health-status-table">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Health status will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="health-response" class="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        // Toggle mock scenario
+        function toggleScenario() {
+            const scenario = document.getElementById('scenario').value;
+            const responseDiv = document.getElementById('mock-response');
+            
+            // In a real implementation, this would call an API endpoint
+            // For now, we'll just show a simulated response
+            responseDiv.className = 'response success';
+            responseDiv.innerHTML = `Successfully set mock scenario to: ${scenario}`;
+            responseDiv.style.display = 'block';
+            
+            // Hide response after 3 seconds
+            setTimeout(() => {
+                responseDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Load audit logs
+        function loadAuditLogs() {
+            const limit = document.getElementById('log-limit').value;
+            const responseDiv = document.getElementById('audit-response');
+            const tbody = document.getElementById('audit-logs-table').querySelector('tbody');
+            
+            // Clear existing rows
+            tbody.innerHTML = '';
+            
+            // In a real implementation, this would fetch from an API
+            // For now, we'll show sample data
+            const sampleLogs = [
+                {
+                    timestamp: '2023-05-15T10:30:00Z',
+                    service: 'transfer-service',
+                    action: 'transfer_initiated',
+                    resource: 'transfer_12345',
+                    details: 'Transfer of $100.00 from ACC001 to ACC002'
+                },
+                {
+                    timestamp: '2023-05-15T10:31:15Z',
+                    service: 'transfer-service',
+                    action: 'otp_verified',
+                    resource: 'transfer_12345',
+                    details: 'OTP verification successful'
+                },
+                {
+                    timestamp: '2023-05-15T10:31:30Z',
+                    service: 'transfer-service',
+                    action: 'payment_processed',
+                    resource: 'transfer_12345',
+                    details: 'Payment processed successfully, transaction ID: TXN98765'
+                },
+                {
+                    timestamp: '2023-05-15T10:31:35Z',
+                    service: 'transfer-service',
+                    action: 'transfer_completed',
+                    resource: 'transfer_12345',
+                    details: 'Transfer completed successfully'
+                }
+            ];
+            
+            // Add sample logs to table
+            sampleLogs.forEach(log => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = new Date(log.timestamp).toLocaleString();
+                row.insertCell(1).textContent = log.service;
+                row.insertCell(2).textContent = log.action;
+                row.insertCell(3).textContent = log.resource;
+                row.insertCell(4).textContent = log.details;
+            });
+            
+            responseDiv.className = 'response success';
+            responseDiv.innerHTML = `Loaded ${sampleLogs.length} audit logs`;
+            responseDiv.style.display = 'block';
+            
+            // Hide response after 3 seconds
+            setTimeout(() => {
+                responseDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Check system health
+        function checkHealth() {
+            const responseDiv = document.getElementById('health-response');
+            const tbody = document.getElementById('health-status-table').querySelector('tbody');
+            
+            // Clear existing rows
+            tbody.innerHTML = '';
+            
+            // In a real implementation, this would fetch from health endpoints
+            // For now, we'll show sample data
+            const services = [
+                { name: 'auth-service', status: 'UP', details: 'Database OK' },
+                { name: 'accounts-service', status: 'UP', details: 'Database OK' },
+                { name: 'transfer-service', status: 'UP', details: 'Database OK, Redis OK' },
+                { name: 'ledger-service', status: 'UP', details: 'Database OK' },
+                { name: 'consumer-service', status: 'UP', details: 'Kafka OK' },
+                { name: 'postgres', status: 'UP', details: 'Connection OK' },
+                { name: 'redis', status: 'UP', details: 'Connection OK' },
+                { name: 'redpanda', status: 'UP', details: 'Broker OK' },
+                { name: 'wiremock', status: 'UP', details: 'Service OK' }
+            ];
+            
+            // Add services to table
+            services.forEach(service => {
+                const row = tbody.insertRow();
+                const statusCell = row.insertCell(0);
+                statusCell.textContent = service.name;
+                statusCell.className = service.status === 'UP' ? 'status-up' : 'status-down';
+                
+                const statusText = row.insertCell(1);
+                statusText.textContent = service.status;
+                statusText.className = service.status === 'UP' ? 'status-up' : 'status-down';
+                
+                row.insertCell(2).textContent = service.details;
+            });
+            
+            responseDiv.className = 'response success';
+            responseDiv.innerHTML = 'Health status refreshed';
+            responseDiv.style.display = 'block';
+            
+            // Hide response after 3 seconds
+            setTimeout(() => {
+                responseDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Add some basic styling for status indicators
+        const style = document.createElement('style');
+        style.textContent = `
+            .status-up {
+                color: #28a745;
+                font-weight: bold;
+            }
+            .status-down {
+                color: #dc3545;
+                font-weight: bold;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Load initial data
+        window.onload = function() {
+            loadAuditLogs();
+            checkHealth();
+        };
+    </script>
+</body>
+</html>

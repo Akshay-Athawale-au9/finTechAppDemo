@@ -1,0 +1,17 @@
+{
+  "name": "fintech-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for fintech application",
+  "main": "seed_db.js",
+  "scripts": {
+    "seed": "node seed_db.js",
+    "migrate": "node migrate_db.js",
+    "check": "node check_seed.js",
+    "services": "node check_services.js",
+    "test-auth": "node test_auth.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "pg": "^8.16.3"
+  }
+}

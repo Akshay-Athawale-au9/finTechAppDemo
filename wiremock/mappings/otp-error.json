@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/otp/verify"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "success": false,
+      "message": "Invalid OTP code"
+    }
+  }
+}

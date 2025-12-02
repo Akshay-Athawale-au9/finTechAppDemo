@@ -1,0 +1,200 @@
+name: Comprehensive Tests
+on: [push, pull_request]
+
+jobs:
+  unit-integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      
+      - name: Install API test dependencies
+        run: |
+          cd services/tests/python
+          pip install -r requirements.txt
+      
+      - name: Run unit tests
+        run: |
+          cd services/tests
+          python -m pytest python/test_auth_service.py python/test_accounts_service.py python/test_transfer_service.py python/test_ledger_service.py -v
+      
+      - name: Start services
+        run: |
+          cd infra
+          docker-compose up -d
+          # Wait for services to start
+          sleep 30
+      
+      - name: Run integration tests
+        run: |
+          cd services/tests
+          python -m pytest python/test_auth_service_integration.py python/test_accounts_service_integration.py -v
+
+  ui-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      
+      - name: Install UI test dependencies
+        run: |
+          cd services/tests/ui
+          pip install -r requirements.txt
+          playwright install-deps
+          playwright install chromium
+      
+      - name: Start services
+        run: |
+          cd infra
+          docker-compose up -d
+          sleep 30
+      
+      - name: Run UI tests
+        run: |
+          cd services/tests/ui
+          python -m pytest test_admin_ui.py -v
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      
+      - name: Install E2E test dependencies
+        run: |
+          cd services/tests/e2e
+          pip install -r requirements.txt
+      
+      - name: Start services
+        run: |
+          cd infra
+          docker-compose up -d
+          sleep 30
+      
+      - name: Run E2E tests
+        run: |
+          cd services/tests/e2e
+          python -m pytest test_complete_user_flow.py -v
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      
+      - name: Install performance test dependencies
+        run: |
+          cd services/tests/performance
+          pip install -r requirements.txt
+      
+      - name: Start services
+        run: |
+          cd infra
+          docker-compose up -d
+          sleep 30
+      
+      - name: Run performance tests
+        run: |
+          cd services/tests/performance
+          python -m pytest test_api_performance.py -v
+
+  security-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      
+      - name: Install security test dependencies
+        run: |
+          cd services/tests/security
+          pip install -r requirements.txt
+      
+      - name: Start services
+        run: |
+          cd infra
+          docker-compose up -d
+          sleep 30
+      
+      - name: Run security tests
+        run: |
+          cd services/tests/security
+          python -m pytest test_authentication_security.py test_authorization_security.py test_input_validation.py -v
+      
+      - name: Run bandit security scan
+        run: |
+          pip install bandit
+          bandit -r services/
+      
+      - name: Check for vulnerable dependencies
+        run: |
+          pip install safety
+          safety check
+
+  lint-and-code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+      
+      - name: Install Node.js dependencies
+        run: |
+          cd services/auth
+          npm install
+          cd ../accounts
+          npm install
+          cd ../transfer
+          npm install
+          cd ../ledger
+          npm install
+          cd ../consumer
+          npm install
+      
+      - name: Run TypeScript linting
+        run: |
+          cd services/auth
+          npm run lint || true
+          cd ../accounts
+          npm run lint || true
+          cd ../transfer
+          npm run lint || true
+          cd ../ledger
+          npm run lint || true
+          cd ../consumer
+          npm run lint || true
+      
+      - name: Check for TypeScript compilation errors
+        run: |
+          cd services/auth
+          npm run build
+          cd ../accounts
+          npm run build
+          cd ../transfer
+          npm run build
+          cd ../ledger
+          npm run build
+          cd ../consumer
+          npm run build
