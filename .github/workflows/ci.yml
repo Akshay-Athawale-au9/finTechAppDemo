@@ -21,11 +21,11 @@ jobs:
     
     - name: Install dependencies for all services
       run: |
-        cd services/auth && npm ci || echo "npm ci failed for auth service"
-        cd ../accounts && npm ci || echo "npm ci failed for accounts service"
-        cd ../transfer && npm ci || echo "npm ci failed for transfer service"
-        cd ../ledger && npm ci || echo "npm ci failed for ledger service"
-        cd ../consumer && npm ci || echo "npm ci failed for consumer service"
+        cd services/auth && (npm install || npm ci) || echo "npm install/ci failed for auth service"
+        cd ../accounts && (npm install || npm ci) || echo "npm install/ci failed for accounts service"
+        cd ../transfer && (npm install || npm ci) || echo "npm install/ci failed for transfer service"
+        cd ../ledger && (npm install || npm ci) || echo "npm install/ci failed for ledger service"
+        cd ../consumer && (npm install || npm ci) || echo "npm install/ci failed for consumer service"
     
     - name: Check for TypeScript compilation errors
       run: |

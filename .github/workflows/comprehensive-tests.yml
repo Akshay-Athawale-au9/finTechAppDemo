@@ -417,15 +417,15 @@ jobs:
       - name: Install Node.js dependencies
         run: |
           cd services/auth
-          npm ci
+          npm install || npm ci
           cd ../accounts
-          npm ci
+          npm install || npm ci
           cd ../transfer
-          npm ci
+          npm install || npm ci
           cd ../ledger
-          npm ci
+          npm install || npm ci
           cd ../consumer
-          npm ci
+          npm install || npm ci
       
       - name: Check for TypeScript compilation errors
         run: |
