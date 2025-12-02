@@ -137,7 +137,6 @@ jobs:
       run: |
         cd services/tests
         python run_comprehensive_tests.py || echo "Comprehensive tests completed with some failures"
-      continue-on-error: true
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fintech_test
         REDIS_URL: redis://localhost:6379
