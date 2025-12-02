@@ -5,12 +5,12 @@ jobs:
   unit-integration-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
       
       - name: Install API test dependencies
         run: |
@@ -37,12 +37,12 @@ jobs:
   ui-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
       
       - name: Install UI test dependencies
         run: |
@@ -65,12 +65,12 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
       
       - name: Install E2E test dependencies
         run: |
@@ -91,12 +91,12 @@ jobs:
   performance-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
       
       - name: Install performance test dependencies
         run: |
@@ -117,12 +117,12 @@ jobs:
   security-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
       
       - name: Install security test dependencies
         run: |
@@ -153,25 +153,25 @@ jobs:
   lint-and-code-quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
       
       - name: Install Node.js dependencies
         run: |
           cd services/auth
-          npm install
+          npm ci
           cd ../accounts
-          npm install
+          npm ci
           cd ../transfer
-          npm install
+          npm ci
           cd ../ledger
-          npm install
+          npm ci
           cd ../consumer
-          npm install
+          npm ci
       
       - name: Run TypeScript linting
         run: |
